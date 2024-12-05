@@ -4,7 +4,9 @@ import Image from "next/image";
 import { LivePreviewQuery } from "@contentstack/delivery-sdk";
 
 type InfoCardSection = {
-  info_cards: {};
+  info_cards: {
+    title: string;
+  };
 };
 
 type BannerSection = {
@@ -64,7 +66,10 @@ export default async function Home({
         {content?.sections.map((item) => {
           if (isBannerSection(item)) {
             return (
-              <section className="bg-red-500 flex flex-row">
+              <section
+                key={item.banner.title}
+                className="bg-red-500 flex flex-row"
+              >
                 <div className="flex-grow flex flex-col justify-center align-middle">
                   <h1 className="text-white text-center">
                     {item.banner.title}
@@ -92,9 +97,9 @@ export default async function Home({
 
           if (isInforCardSection(item)) {
             return (
-              <div>
+              <section key={item.info_cards.title}>
                 <Debug value={item.info_cards} />
-              </div>
+              </section>
             );
           }
 
