@@ -1,101 +1,110 @@
+import { Debug } from "@/components/Debug";
+import { stack } from "@/contentstack/sdk";
 import Image from "next/image";
+import { LivePreviewQuery } from "@contentstack/delivery-sdk";
 
-export default function Home() {
+type InfoCardSection = {
+  info_cards: {};
+};
+
+type BannerSection = {
+  banner: {
+    title: string;
+    subtitle: string;
+    link: string;
+    style: "primary" | "secondary";
+    image: {
+      title: string;
+      url: string;
+    };
+    button_label: string;
+  };
+};
+
+const isBannerSection = (
+  section: BannerSection | InfoCardSection,
+): section is BannerSection => {
+  return (section as BannerSection).banner !== undefined;
+};
+
+const isInforCardSection = (
+  section: BannerSection | InfoCardSection,
+): section is BannerSection => {
+  return (section as InfoCardSection).info_cards !== undefined;
+};
+
+type HomePageResponse = {
+  title: string;
+  sections: (InfoCardSection | BannerSection)[];
+};
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  console.log({ searchParams });
+  // This is needed for live preview otherwise changes won't take effect
+  stack.livePreviewQuery({
+    ...searchParams,
+  } as unknown as LivePreviewQuery);
+
+  // The API suggests we can just do stack.contentType("home_page").fetch() for single content type, but it breaks
+  // and complains about live preview
+  const response = await stack
+    .contentType("home_page")
+    .entry()
+    .find<HomePageResponse>();
+
+  const content = response?.entries?.[0];
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div>
+      <div>
+        {content?.sections.map((item) => {
+          if (isBannerSection(item)) {
+            return (
+              <section className="bg-red-500 flex flex-row">
+                <div className="flex-grow flex flex-col justify-center align-middle">
+                  <h1 className="text-white text-center">
+                    {item.banner.title}
+                  </h1>
+                  <p className="text-white text-center">
+                    {item.banner.subtitle}
+                  </p>
+                  <div className="w-full flex justify-center">
+                    <button className="bg-white p-1 w-auto border-r-2">
+                      {item.banner.button_label}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <Image
+                    src={item.banner.image.url}
+                    alt={item.banner.image.title}
+                    width={500}
+                    height={300}
+                  />
+                </div>
+              </section>
+            );
+          }
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          if (isInforCardSection(item)) {
+            return (
+              <div>
+                <Debug value={item.info_cards} />
+              </div>
+            );
+          }
+
+          return null;
+        })}
+
+        {/* <Image src={content.image.url} alt="banner" width={1080} height={250} />
+        <h1>{content.title}</h1>
+        <h2>{content.description}</h2> */}
+      </div>
     </div>
   );
 }
