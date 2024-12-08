@@ -2,10 +2,13 @@ import { Debug } from "@/components/Debug";
 import { stack } from "@/contentstack/sdk";
 import Image from "next/image";
 import { LivePreviewQuery } from "@contentstack/delivery-sdk";
+import { InfoCard } from "@/components/InfoCard";
 
 type InfoCardSection = {
   info_cards: {
-    title: string;
+    cards: {
+      card: { reference: { uid: string; _content_type_uid: "info_card" }[] };
+    }[];
   };
 };
 
@@ -47,9 +50,14 @@ export default async function Home({
 }) {
   console.log({ searchParams });
   // This is needed for live preview otherwise changes won't take effect
-  stack.livePreviewQuery({
-    ...searchParams,
-  } as unknown as LivePreviewQuery);
+  try {
+    stack.livePreviewQuery({
+      ...(await searchParams),
+    } as unknown as LivePreviewQuery);
+  } catch (error) {
+    // Don't make this issue a blocking issue for rendering
+    console.warn(error);
+  }
 
   // The API suggests we can just do stack.contentType("home_page").fetch() for single content type, but it breaks
   // and complains about live preview
@@ -62,7 +70,7 @@ export default async function Home({
 
   return (
     <div>
-      <div>
+      <div className="flex flex-col">
         {content?.sections.map((item) => {
           if (isBannerSection(item)) {
             return (
@@ -97,8 +105,16 @@ export default async function Home({
 
           if (isInforCardSection(item)) {
             return (
-              <section key={item.info_cards.title}>
-                <Debug value={item.info_cards} />
+              <section key={""} className="flex ">
+                {item.info_cards.cards.map((card) => {
+                  const uid = card?.card?.reference?.[0]?.uid;
+                  console.log({ uid });
+                  if (uid) {
+                    return <InfoCard uid={uid} key={uid} />;
+                  }
+
+                  return null;
+                })}
               </section>
             );
           }
